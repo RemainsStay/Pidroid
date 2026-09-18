@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from pidroid.models.tags import Tag
 from pidroid.models.guild_configuration import GuildConfiguration
-from pidroid.models.plugins import NewPlugin, NewPluginRevision, Plugin
+from pidroid.models.plugins import NewPlugin
 from pidroid.models.accounts import TheoTownAccount
 from pidroid.models.translation import TranslationEntryDict
 from pidroid.modules.moderation.models.case import Case
@@ -994,21 +994,3 @@ class API:
         ))
         res.raise_on_error()
         return [NewPlugin(np) for np in res.data]
-
-    async def fetch_plugin_by_id(self, plugin_id: int, show_hidden: bool = False) -> list[Plugin]:
-        """Queries the TheoTown API for a plugin of the specified ID."""
-        res = await self.get(Route(
-            "/game/plugin/find",
-            {"id": plugin_id, "show_hidden": 1 if show_hidden else 0}
-        ))
-        res.raise_on_error()
-        return [Plugin(p) for p in res.data]
-
-    async def search_plugins(self, query: str, show_hidden: bool = False) -> list[Plugin]:
-        """Queries the TheoTown API for plugins matching the query string."""
-        res = await self.get(Route(
-            "/game/plugin/find",
-            {"query": query, "show_hidden": 1 if show_hidden else 0}
-        ))
-        res.raise_on_error()
-        return [Plugin(p) for p in res.data]

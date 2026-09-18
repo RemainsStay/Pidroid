@@ -165,32 +165,3 @@ class NewPlugin(AbstractPlugin):
 
     def __init__(self, data: dict[str, Any]):
         super().__init__(data)
-
-class Plugin(AbstractPlugin):
-    """This class represents a new TheoTown plugin. This class differs from Plugin class since it additionally contains time property."""
-
-    def __init__(self, data: dict[str, Any]):
-        super().__init__(data)
-        self._download_count: int = data['downloads']
-
-    @override
-    def to_embed(self) -> Embed:
-        embed = super().to_embed()
-        embed.add_field(name='**Downloads**', value=f'{self._download_count:,}', inline=False)
-        return embed
-
-class NewPluginRevision(AbstractPlugin):
-    """This class represents a new TheoTown plugin revision."""
-
-    def __init__(self, data: dict[str, Any]):
-        super().__init__(data)
-        self._author_comments: str = data["author_comments"]
-        self._approval_author_id: int = data["approval_author"]
-
-    @override
-    def to_embed(self) -> Embed:
-        embed = super().to_embed()
-        if self._author_comments != "":
-            author_comments = truncate_string(escape_markdown(self._author_comments), 1024)
-            embed.add_field(name='**Author Comments**', value=author_comments, inline=False)
-        return embed

@@ -4,7 +4,7 @@ import random
 
 from discord import File
 from discord.ext import commands
-from discord.ext.commands import BadArgument, MissingRequiredArgument
+from discord.ext.commands import BadArgument
 from discord.ext.commands.context import Context
 from io import BytesIO
 from typing import TypedDict
@@ -13,13 +13,9 @@ from pidroid.client import Pidroid
 from pidroid.constants import THEOTOWN_GUILD
 from pidroid.models.categories import TheoTownCategory
 from pidroid.models.exceptions import APIException
-from pidroid.models.view import PaginatingView
-from pidroid.services.error_handler import notify
 from pidroid.utils import http, format_version_code
-from pidroid.utils.decorators import command_checks
 from pidroid.utils.embeds import PidroidEmbed
 from pidroid.utils.http import Route
-from pidroid.utils.paginators import PluginListPaginator
 
 logger = logging.getLogger("Pidroid")
 
@@ -160,94 +156,6 @@ class TheoTownCommandCog(commands.Cog):
                 .set_footer(text=f'#{screenshot["id"]}')
             )
             return await ctx.reply(embed=embed)
-
-    @commands.group(
-        name='find-plugin',
-        brief='Searches the plugin store for the specified plugin.',
-        usage='<query>',
-        aliases=['findplugin'],
-        examples=[
-            ("Find plugins named road", 'find-plugin road'),
-            ("Find something more precise", 'find-plugin "Indonesia transport pack"'),
-        ],
-        category=TheoTownCategory,
-        invoke_without_command=True,
-        fallback="search",
-    )
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.cooldown(rate=2, per=10, type=commands.BucketType.user)
-    async def find_plugin_command(self, ctx: Context[Pidroid], *, query: str):
-        if ctx.invoked_subcommand is None:
-
-            if len(query) <= 2:
-                raise BadArgument("Your query is too short! Please make sure it's at least 3 characters long.")
-
-            if len(query) > 30:
-                raise BadArgument("Your query is too long, please keep it below 30 characters!")
-
-            async with ctx.channel.typing():
-                plugin_list = await self.api.search_plugins(query)
-
-            plugin_count = len(plugin_list)
-            if plugin_count == 0:
-                raise BadArgument('No plugin could be found by your query.')
-
-            if plugin_count > 1:
-                pages = PaginatingView(self.client, ctx, source=PluginListPaginator(query, plugin_list))
-                return await pages.send()
-
-            return await ctx.reply(embed=plugin_list[0].to_embed())
-
-    @find_plugin_command.error
-    async def on_find_plugin_command_error(self, ctx: Context[Pidroid], error: Exception):
-        if isinstance(error, MissingRequiredArgument):
-            if error.param.name == "query":
-                return await notify(ctx, "Please specify plugin search query.")
-        setattr(error, 'unhandled', True)
-
-    @find_plugin_command.command(
-        name='id',
-        brief='Searches the plugin store for the specific plugin ID.',
-        usage='<plugin_id>',
-        category=TheoTownCategory,
-    )
-    @commands.bot_has_permissions(send_messages=True)
-    @commands.cooldown(rate=2, per=10, type=commands.BucketType.user)
-    async def find_plugin_by_id_command(self, ctx: Context[Pidroid], plugin_id: int):
-        async with ctx.channel.typing():
-            plugin_list = await self.api.fetch_plugin_by_id(plugin_id)
-
-        plugin_count = len(plugin_list)
-        if plugin_count == 0:
-            raise BadArgument('No plugin could be found by the specified ID.')
-        return await ctx.reply(embed=plugin_list[0].to_embed())
-
-    @find_plugin_by_id_command.error
-    async def on_find_plugin_by_id_command_error(self, ctx: Context[Pidroid], error: Exception):
-        if isinstance(error, MissingRequiredArgument):
-            if error.param.name == "plugin_id":
-                return await notify(ctx, "Please specify plugin ID to find by.")
-        setattr(error, 'unhandled', True)
-
-    @commands.command(
-        name='download-plugin',
-        brief='Downloads a plugin by the specified ID.',
-        usage='<plugin ID>',
-        permissions=["TheoTown developer"],
-        aliases=['downloadplugin'],
-        category=TheoTownCategory
-    )
-    @commands.bot_has_permissions(send_messages=True)
-    @command_checks.is_theotown_developer()
-    async def downloadplugin(self, ctx: Context[Pidroid], plugin_id: int):
-        async with ctx.typing():
-            plugins = await self.api.fetch_plugin_by_id(plugin_id, True)
-            if len(plugins) == 0:
-                raise BadArgument("I could not find any plugins to download by the specified ID!")
-
-            plugin = plugins[0]
-            _ = await ctx.author.send(f"Here's a link for '{plugin.clean_name}' plugin: {plugin.download_url}")
-            return await ctx.reply(f"The download link for '{plugin.clean_name}' plugin has been sent to you via a DM!")
 
     @commands.command(
         name='link-account',
