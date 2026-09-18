@@ -57,5 +57,15 @@ reportMissingTypeStubs = false
 reportUnusedCallResult = false
 pythonVersion = "3.12"
 
+[tool.ruff.lint]
+select = [
+    "ALL",
+]
+ignore = [
+    "CPY001",  # Missing copyright notice at top of file
+
+    "D107",    # Missing docstring in `__init__`
+]
+
 [tool.uv]
 exclude-newer = "2099-01-01T00:00:00Z"

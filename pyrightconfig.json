@@ -3,6 +3,7 @@
     {
       "root": "services/bot",
       "extraPaths": [
+        "services/bot/src",
         "pidroid-core"
       ]
     }
