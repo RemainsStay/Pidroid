@@ -1,8 +1,8 @@
 import asyncio
-import discord
 import random
 import re
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import BadArgument, Context, MissingRequiredArgument
 
@@ -27,16 +27,6 @@ NEKO_ENDPOINTS = [
     # GIFs
     'slap', 'pat', 'feed', 'cuddle', 'hug',
     'tickle', 'smug', 'kiss',
-]
-
-WAIFU_PICS_API = "https://api.waifu.pics/sfw"
-WAIFU_PICS_ENDPOINTS = [
-    "bully", "cuddle", "cry", "hug", "awoo",
-    "kiss", "lick", "pat", "smug", # This is good, I allow this
-    "bonk", "yeet", "blush", "smile",
-    "wave", "highfive", "handhold", "nom",
-    "bite", "glomp", "slap", "kill", "kick",
-    "happy", "wink", "poke", "dance", "cringe"
 ]
 
 def get_owo(text: str) -> str:
@@ -160,31 +150,6 @@ class AnimeCommandCog(commands.Cog):
             if error.param.name == "text":
                 return await notify(ctx, "UwU, what do you want to owoify?")
         setattr(error, 'unhandled', True)
-
-    @commands.command(
-        name="animedia",
-        brief="Fetches an anime themed GIF/image file from waifu.pics API.",
-        usage="[media type]",
-        category=RandomCategory,
-    )
-    @commands.bot_has_permissions(send_messages=True)
-    async def anime_media_command(self, ctx: Context[Pidroid], endpoint: str | None):
-        if endpoint is None:
-            endpoint = random.choice(WAIFU_PICS_ENDPOINTS) # nosec
-
-        endpoint = endpoint.lower().strip()
-        if endpoint not in WAIFU_PICS_ENDPOINTS:
-            raise BadArgument((
-                'Wrong media type specified. '
-                'The allowed types are: `' + ', '.join(WAIFU_PICS_ENDPOINTS) + '`.'
-            ))
-        async with await http.get(self.client, f"{WAIFU_PICS_API}/{endpoint}") as r:
-            data: dict[str, str] = await r.json()
-
-        embed = SuccessEmbed()
-        embed.set_image(url=data["url"])
-        embed.set_footer(text=endpoint)
-        await ctx.reply(embed=embed)
 
     @commands.command(
         name="weeb",
