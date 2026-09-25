@@ -1,6 +1,7 @@
 import asyncio
 import random
 import re
+from typing import final
 
 import discord
 from discord.ext import commands
@@ -18,53 +19,58 @@ from pidroid.utils.file import Resource
 NEKO_API = "https://nekos.life/api/v2"
 NEKO_ENDPOINTS = [
     # Animals
-    'goose', 'lizard', 'meow', 'woof',
+    "goose", "lizard", "meow", "woof",
 
     # Images
-    'waifu', '8ball', 'gecg', 'avatar',
-    'fox_girl', 'neko', 'wallpaper',
+    "waifu", "8ball", "gecg", "avatar",
+    "fox_girl", "neko", "wallpaper",
 
     # GIFs
-    'slap', 'pat', 'feed', 'cuddle', 'hug',
-    'tickle', 'smug', 'kiss',
+    "slap", "pat", "feed", "cuddle", "hug",
+    "tickle", "smug", "kiss",
 ]
 
 def get_owo(text: str) -> str:
-    """Returns the input text in owo format."""
+    """Transform the input text into owo format."""
 
     faces = ["owo", "UwU", ">w<", "^w^"]
     v = text
-    r = re.sub('[rl]', "w", v)
-    r = re.sub('[RL]', "W", r)
-    r = re.sub('ove', 'uv', r)
-    r = re.sub('n', 'ny', r)
-    r = re.sub('N', 'NY', r)
-    r = re.sub('[!]', " " + random.choice(faces) + " ", r) # nosec
+    r = re.sub("[rl]", "w", v)
+    r = re.sub("[RL]", "W", r)
+    r = re.sub("ove", "uv", r)
+    r = re.sub("n", "ny", r)
+    r = re.sub("N", "NY", r)
+    r = re.sub("[!]", " " + random.choice(faces) + " ", r) # nosec
     return r
 
+@final
 class AnimeCommandCog(commands.Cog):
-    """This class implements cog which contains commands for anime related APIs."""
+    """Class responsible for implementing commands primarily used to interact with anime related APIs."""
 
-    def __init__(self, client: Pidroid):
+    def __init__(self, client: Pidroid) -> None:
         super().__init__()
         self.client = client
 
     @commands.command(
         name="yourebanned",
-        category=RandomCategory,
-        hidden=True
+        extras={
+            "category": RandomCategory,
+        },
+        hidden=True,
     )
     @commands.is_owner()
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     async def yourebanned_command(self, ctx: Context[Pidroid]):
         async with ctx.typing():
-            return await ctx.reply(file=discord.File(Resource('you_were_banned.mp4')))
+            return await ctx.reply(file=discord.File(Resource("you_were_banned.mp4")))
 
     @commands.group(
         name="neko",
-        category=RandomCategory,
+        extras={
+            "category": RandomCategory,
+        },
         hidden=True,
-        invoke_without_command=True
+        invoke_without_command=True,
     )
     @commands.bot_has_permissions(send_messages=True)
     async def neko_command(self, ctx: Context[Pidroid]):
@@ -75,9 +81,11 @@ class AnimeCommandCog(commands.Cog):
             ))
 
     @neko_command.command(
-        name='fact',
-        brief='Tells a random fact as provided by the API.',
-        category=RandomCategory,
+        name="fact",
+        brief="Tells a random fact as provided by the API.",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True)
     async def neko_fact_command(self, ctx: Context[Pidroid]):
@@ -86,9 +94,11 @@ class AnimeCommandCog(commands.Cog):
         return await ctx.reply(embed=SuccessEmbed(data["fact"]))
 
     @neko_command.command(
-        name='name',
-        brief='Generates a random name from the API.',
-        category=RandomCategory
+        name="name",
+        brief="Generates a random name from the API.",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True)
     async def neko_name_command(self, ctx: Context[Pidroid]):
@@ -97,9 +107,11 @@ class AnimeCommandCog(commands.Cog):
         return await ctx.reply(embed=SuccessEmbed(data["name"]))
 
     @neko_command.command(
-        name='why',
-        brief='Questions that make you think as provided by the API.',
-        category=RandomCategory,
+        name="why",
+        brief="Questions that make you think as provided by the API.",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True)
     async def neko_why_command(self, ctx: Context[Pidroid]):
@@ -108,10 +120,12 @@ class AnimeCommandCog(commands.Cog):
         return await ctx.reply(embed=SuccessEmbed(data["why"]))
 
     @neko_command.command(
-        name='image',
-        brief='Fetches an image for the specified type as provided by the API.',
-        usage='[image type]',
-        category=RandomCategory,
+        name="image",
+        brief="Fetches an image for the specified type as provided by the API.",
+        usage="[image type]",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True)
     async def neko_image_command(self, ctx: Context[Pidroid], endpoint: str | None):
@@ -128,14 +142,16 @@ class AnimeCommandCog(commands.Cog):
             return await ctx.reply(embed=embed)
 
         raise BadArgument(
-            'Wrong image type specified. The allowed types are: `' + ', '.join(NEKO_ENDPOINTS) + '`.'
+            "Wrong image type specified. The allowed types are: `" + ", ".join(NEKO_ENDPOINTS) + "`.",
         )
 
     @commands.command(
         name="owo",
-        brief='Returns the original input text, but in owo format.',
-        usage='<text to be converted>',
-        category=RandomCategory
+        brief="Returns the original input text, but in owo format.",
+        usage="<text to be converted>",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True)
     async def owo_command(self, ctx: Context[Pidroid], *, text: str):
@@ -153,8 +169,10 @@ class AnimeCommandCog(commands.Cog):
 
     @commands.command(
         name="weeb",
-        category=RandomCategory,
-        hidden=True
+        extras={
+            "category": RandomCategory,
+        },
+        hidden=True,
     )
     @commands.bot_has_permissions(send_messages=True)
     @commands.max_concurrency(number=1, per=commands.BucketType.guild, wait=True)
@@ -166,5 +184,5 @@ class AnimeCommandCog(commands.Cog):
             _ = await ctx.send(f"<@{JESSE_ID}>, you asked for it")
 
 
-async def setup(client: Pidroid):
+async def setup(client: Pidroid) -> None:
     await client.add_cog(AnimeCommandCog(client))

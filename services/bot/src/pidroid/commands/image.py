@@ -1,9 +1,10 @@
-import discord
 import os
+from io import BytesIO
+from typing import final
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import BadArgument, Context
-from io import BytesIO
 from PIL import Image, ImageSequence
 
 from pidroid.client import Pidroid
@@ -11,8 +12,10 @@ from pidroid.models.categories import RandomCategory
 from pidroid.utils import http, run_in_executor
 from pidroid.utils.file import Resource
 
-async def load_image_from_url(client: Pidroid, url: str):
-    """Loads the image from URL."""
+MAX_IMAGE_SIZE = 7 * 1024 * 1024  # 7 MiB
+
+async def load_image_from_url(client: Pidroid, url: str) -> Image.Image:
+    """Load an image from a URL and return it as a PIL Image object."""
     async with await http.get(client, url) as r:
         payload = await r.read()
     return Image.open(BytesIO(payload))
@@ -21,33 +24,35 @@ async def handle_attachment(ctx: Context[Pidroid]) -> tuple[discord.Attachment, 
     """Returns None or discord.Attachment after assuring it is safe to use."""
     attachments = ctx.message.attachments
     if len(attachments) < 1:
-        raise BadArgument('I could not find any attachments!')
+        raise BadArgument("I could not find any attachments!")
 
     attachment = attachments[0]
 
     filename = attachment.filename
     extension = os.path.splitext(filename)[1]
-    if extension.lower() not in ['.png', '.jpg', '.jpeg']:
-        raise BadArgument('Unsupported file extension. Only image files of .png, .jpg and .jpeg extensions are supported!')
+    if extension.lower() not in [".png", ".jpg", ".jpeg"]:
+        raise BadArgument("Unsupported file extension. Only image files of .png, .jpg and .jpeg extensions are supported!")
 
-    if attachment.size >= 7000000:
-        raise BadArgument('Your image is too big! Please upload images below 7 MBs')
+    if attachment.size > MAX_IMAGE_SIZE:
+        raise BadArgument("Your image is too big. Please upload an image that is at most 7 MiBs in size.")
 
     return attachment, extension
 
-
+@final
 class ImageManipulationCommandCog(commands.Cog):
-    """This class implements cog which contains commands for image manipulation."""
+    """Class responsible for implementing commands primarily used for image manipulation."""
 
-    def __init__(self, client: Pidroid):
+    def __init__(self, client: Pidroid) -> None:
         super().__init__()
         self.client = client
 
     @commands.command(
         name="bonk",
-        brief='Bonks the specified member.',
-        usage='<member>',
-        category=RandomCategory
+        brief="Bonks the specified member.",
+        usage="<member>",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
@@ -56,7 +61,7 @@ class ImageManipulationCommandCog(commands.Cog):
     async def bonk_command(self, ctx: Context[Pidroid], member: discord.Member):
         if ctx.author.id == member.id:
             raise BadArgument("You cannot bonk yourself!")
-        
+
         async with ctx.channel.typing():
             author_avatar = await load_image_from_url(self.client, ctx.author.display_avatar.with_size(128).url)
             member_avatar = await load_image_from_url(self.client, member.display_avatar.with_size(128).url)
@@ -68,7 +73,7 @@ class ImageManipulationCommandCog(commands.Cog):
             member_avatar.close()
 
             output_stream = BytesIO()
-            canvas_image.save(output_stream, format='jpeg')
+            canvas_image.save(output_stream, format="jpeg")
             canvas_image.close()
             output_stream.seek(0)
             await ctx.reply(content=member.mention, file=discord.File(output_stream, filename='image.jpg'))
@@ -78,9 +83,11 @@ class ImageManipulationCommandCog(commands.Cog):
 
     @commands.command(
         name="memefy",
-        brief='Updates meme uploaded as attachment to comply within the German copyright regulations.',
-        usage='[bool whether to retain ratio]',
-        category=RandomCategory
+        brief="Updates meme uploaded as attachment to comply within the German copyright regulations.",
+        usage="[bool whether to retain ratio]",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
@@ -92,7 +99,7 @@ class ImageManipulationCommandCog(commands.Cog):
 
             # Load the attachment
             attachment_image = await load_image_from_url(self.client, attachment.url)
-            
+
             # Change the image size
             sizes = (128, 128)
             message = "Meme has been updated to comply with the German regulations"
@@ -118,10 +125,12 @@ class ImageManipulationCommandCog(commands.Cog):
 
     @commands.command(
         name="jpeg",
-        brief='Downscales an image to glorious JPEG quality.',
-        usage='<quality(1-10)>',
-        aliases=['hank'],
-        category=RandomCategory
+        brief="Downscales an image to glorious JPEG quality.",
+        usage="<quality(1-10)>",
+        aliases=["hank"],
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(rate=1, per=10, type=commands.BucketType.user)
@@ -141,7 +150,7 @@ class ImageManipulationCommandCog(commands.Cog):
 
             # Save with the quality setting
             output_stream = BytesIO()
-            attachment_image.save(output_stream, format='JPEG', quality=quality)
+            attachment_image.save(output_stream, format="JPEG", quality=quality)
             attachment_image.close()
             output_stream.seek(0)
             await ctx.reply(content='Do I look like I know what a JPEG is?', file=discord.File(output_stream, filename='compression.jpg'))
@@ -149,9 +158,11 @@ class ImageManipulationCommandCog(commands.Cog):
 
     @commands.command(
         name="headpat",
-        brief='Headpats the specified member.',
-        usage='<member>',
-        category=RandomCategory
+        brief="Headpats the specified member.",
+        usage="<member>",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.bot_has_permissions(send_messages=True, attach_files=True)
     @commands.cooldown(rate=1, per=25, type=commands.BucketType.user)
@@ -165,13 +176,13 @@ class ImageManipulationCommandCog(commands.Cog):
             member_avatar = await load_image_from_url(self.client, member.display_avatar.with_size(256).url)
             headpat_gif = await run_in_executor(Image.open, fp=Resource('pat.gif'))
 
-            frames = []
+            frames: list[Image.Image] = []
             for frame in ImageSequence.Iterator(headpat_gif):
                 composite_frame = Image.new(member_avatar.mode, (256,356))
-                frame = frame.convert('RGBA')
+                rgba_frame = frame.convert("RGBA")
                 composite_frame.paste(member_avatar, (0, 100))
-                composite_frame.paste(frame, (0, 0), frame)
-                composite_frame.info['disposal'] = 2
+                composite_frame.paste(rgba_frame, (0, 0), rgba_frame)
+                composite_frame.info["disposal"] = 2
                 frames.append(composite_frame)
 
             member_avatar.close()
@@ -194,5 +205,5 @@ class ImageManipulationCommandCog(commands.Cog):
         output_stream.close()
 
 
-async def setup(client: Pidroid):
+async def setup(client: Pidroid) -> None:
     await client.add_cog(ImageManipulationCommandCog(client))

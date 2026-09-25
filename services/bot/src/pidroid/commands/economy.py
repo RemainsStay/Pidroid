@@ -1,6 +1,6 @@
 import json
 import random
-from typing import override
+from typing import final, override
 
 from discord.ext import commands
 from discord.ext.commands import BadArgument, Context
@@ -12,7 +12,7 @@ from pidroid.utils.cooldowns import load_command_cooldowns, save_command_cooldow
 from pidroid.utils.decorators import command_checks
 from pidroid.utils.time import humanize
 
-BASE_API_URL = 'https://unbelievaboat.com/api/v1/guilds/365478391719264276/users'
+BASE_API_URL = "https://unbelievaboat.com/api/v1/guilds/365478391719264276/users"
 
 CURRENCY_SYMBOL = "<:theon:658301468637528095>"
 
@@ -122,11 +122,13 @@ COOLDOWN_RESPONSES = [
     "Every day, I imagine a future where theons shine. That future will be yours in %time%.", # real subtle
 ]
 
-def get_currency(money_amount: int):
+def format_currency(money_amount: int) -> str:
+    """Format the specified money amount into a string with the currency symbol and comma separators."""
     return f"{CURRENCY_SYMBOL}{money_amount:,}"
 
+@final
 class EconomyCommandCog(commands.Cog):
-    """This class implements a cog which contains interactions with unbelievaboat bot API."""
+    """Class responsible for implementing commands primarily used to interact with the economy system of the bot."""
 
     def __init__(self, client: Pidroid) -> None:
         super().__init__()
@@ -134,13 +136,15 @@ class EconomyCommandCog(commands.Cog):
         load_command_cooldowns(self.beg_command, "beg.dill")
 
     @override
-    async def cog_unload(self):
+    async def cog_unload(self) -> None:
         save_command_cooldowns(self.beg_command, "beg.dill")
 
     @commands.command(
         name="beg",
-        brief='Beg Pidroid to print some money for you.',
-        category=RandomCategory
+        brief="Beg Pidroid to print some money for you.",
+        extras={
+            "category": RandomCategory,
+        },
     )
     @commands.cooldown(rate=1, per=60 * 60 * 24 * 3, type=commands.BucketType.user)
     @command_checks.is_theotown_guild()
@@ -157,7 +161,7 @@ class EconomyCommandCog(commands.Cog):
             cash = random.randint(9000, 90000)
             async with await http.patch(self.client, f"{BASE_API_URL}/{ctx.author.id}", json.dumps({'cash': cash}), headers=headers):
                 pass
-            return await ctx.reply(random.choice(SUCCESSFUL_BEGGING_RESPONSES).replace('%cash%', get_currency(cash))) # nosec
+            return await ctx.reply(random.choice(SUCCESSFUL_BEGGING_RESPONSES).replace('%cash%', format_currency(cash))) # nosec
 
         if random.randint(1, 1000) <= 12: # nosec
             async with await http.get(self.client, f"{BASE_API_URL}/{ctx.author.id}", headers=headers) as response:
@@ -166,7 +170,7 @@ class EconomyCommandCog(commands.Cog):
             if steal_amount > 0:
                 async with await http.patch(self.client, f"{BASE_API_URL}/{ctx.author.id}", json.dumps({'cash': -steal_amount}), headers=headers):
                     pass
-                _ = await ctx.reply(random.choice(STEAL_MONEY_RESPONSES).replace("%cash%", get_currency(steal_amount)))
+                _ = await ctx.reply(random.choice(STEAL_MONEY_RESPONSES).replace("%cash%", format_currency(steal_amount)))
             return
 
         _ = await ctx.reply(random.choice(FAILED_BEGGING_RESPONSES)) # nosec
